@@ -2,36 +2,44 @@ package main
 
 import (
 	"fmt"
+	"net/http"
+	"time"
 )
 
 func main() {
-
-	number := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
-	reversedNumber := reverseSlice(number)
-	maxNumber := findMaxNumber(number)
-	for i := 0; i < len(number)/2; i++ {
-		number[i], number[len(number)-i-1] = number[len(number)-i-1], number[i]
+	sites := []string{
+		"https://www.google.com/",
+		"https://github.com",
+		"https://stackoverflow.com/",
+		"https://www.instagram.com/",
 	}
+	start := time.Now()
+	defer func() {
+		fmt.Println(time.Since(start))
+	}()
+	c := make(chan string)
+	for _, v := range sites {
+		go checkWebsiteStats(v, c)
+	}
+	for l := range c { 
+		go func (link string)  {
+			time.Sleep(time.Second)
+			checkWebsiteStats(link,c)
+		}(l)
+		
+	}
+		
+	
 
-	fmt.Println(reversedNumber, number, maxNumber)
 }
-
-func reverseSlice(slice []int) []int {
-	length := len(slice)
-	reversed := make([]int, length)
-
-	for i, v := range slice {
-		reversed[length-i-1] = v
+func checkWebsiteStats(s string, c chan string) {
+	resp, err := http.Get(s)
+	if err != nil {
+		fmt.Println(s, "is inactive")
+		c <- s
+		panic(err)
 	}
-	return reversed
-}
- 
-func findMaxNumber(slice []int)int{
-	max := slice[0]
-	for _, v := range slice {
-	 if v > max {
-		max = v
-	}
-	}
-	return max
+	fmt.Println(s, "is active")
+	c <- s
+	defer resp.Body.Close()
 }
