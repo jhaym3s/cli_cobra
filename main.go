@@ -1,45 +1,30 @@
 package main
 
 import (
+	"flag"
 	"fmt"
-	"net/http"
+	"math/rand"
+	"regexp"
+	"strconv"
 	"time"
 )
 
 func main() {
-	sites := []string{
-		"https://www.google.com/",
-		"https://github.com",
-		"https://stackoverflow.com/",
-		"https://www.instagram.com/",
-	}
-	start := time.Now()
-	defer func() {
-		fmt.Println(time.Since(start))
-	}()
-	c := make(chan string)
-	for _, v := range sites {
-		go checkWebsiteStats(v, c)
-	}
-	for l := range c { 
-		go func (link string)  {
-			time.Sleep(time.Second)
-			checkWebsiteStats(link,c)
-		}(l)
-		
-	}
-		
+	rand.Seed(time.Now().UTC().UnixNano())
 	
-
-}
-func checkWebsiteStats(s string, c chan string) {
-	resp, err := http.Get(s)
-	if err != nil {
-		fmt.Println(s, "is inactive")
-		c <- s
-		panic(err)
+	dice := flag.String("d", "d4", "The type of dice to roll. Format is DX where X is an int. Default is D6")
+	numRoll := flag.Int("n",1,"The number of die rolls. Default is 1")
+	flag.Parse() //After defining all flags call the function "flag.Parse()" to parse the command line into the defined flags.
+	matched, _ := regexp.Match("d\\d+$", []byte(*dice))
+	if matched {
+		stringDiceSize := (*dice)[1:]
+		diceSize, _ := strconv.Atoi(stringDiceSize)
+		for i := 0; i < *numRoll; i++ {
+			roll := rand.Intn(diceSize)+1
+			fmt.Printf("You chose %d \n", roll)	
+		}
+		
+	} else {
+		fmt.Printf("Something is wrong dice format is dx  %s \n", *dice)
 	}
-	fmt.Println(s, "is active")
-	c <- s
-	defer resp.Body.Close()
 }
