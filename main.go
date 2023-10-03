@@ -70,4 +70,5 @@ func advantage(dice []int)  {
 func disAdvantage(dice []int)  {
 	sort.Ints(dice)
 	fmt.Printf("advantage is %d", dice[0])
+	//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
 }
