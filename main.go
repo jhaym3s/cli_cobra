@@ -29,7 +29,7 @@ func main() {
 			advantage(value)
 		}
 		if *disAd{
-			advantage(value)
+			disAdvantage(value)
 		}
 		printDice(value)
 	} else {
