@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 )
 
 type problems struct {
@@ -15,6 +16,7 @@ type problems struct {
 
 func main() {
 	quizFileName := flag.String("quiz", "quiz.cvs", "")
+	timeLimit := flag.Int("limit",30,"Seconds for the quiz")
 	flag.Parse()
 	cvsFile, err := os.Open(*quizFileName)
 	if err != nil {
@@ -22,24 +24,33 @@ func main() {
 	} else {
 		cvsReader := csv.NewReader(cvsFile)
 		cont, err := cvsReader.ReadAll()
+		
 		if err != nil {
 			exit("Something is wrong with your cvs file")
 		} else {
 			problems := parseLines(cont)
+			timer := time.NewTimer(time.Duration(*timeLimit)* time.Second)
 			correctAnswers := 0
 			for i, p := range problems {
 				fmt.Printf("Question %d %s = \n", i+1, p.q)
-				var answer string
+				ansChan := make(chan string)
+				go func ()  {
+					var answer string
 				fmt.Scanf("%s\n", &answer)
+				ansChan <- answer
+				}()
+				select{
+				case <-timer.C:
+					fmt.Printf("You had %d correct out of %d\n",correctAnswers,len(problems))
+					return // if we use a break here
+				case answer := <-ansChan:
 				if answer == p.a{
 					correctAnswers++ 
 					fmt.Println("You are correct")
-				}else{
-					fmt.Println("Mumu")
 				}
-				
+		}
 			}
-			fmt.Printf("You had %d correct out of %d\n",correctAnswers,len(problems))
+		fmt.Printf("You had %d correct out of %d\n",correctAnswers,len(problems))
 		}
 
 	}
@@ -60,3 +71,5 @@ func exit(errMsg string) {
 	fmt.Println(errMsg)
 	os.Exit(1)
 }
+
+
